@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" fill="none">
+  <g id="info_panel" font-family="monospace">
+    <g id="info_panel_connector" stroke="#667278" stroke-width="2" vector-effect="non-scaling-stroke">
+      <path d="M0 48H74L96 70"/>
+      <rect x="96" y="18" width="606" height="224" fill="#080C0E" fill-opacity="0.94"/>
+    </g>
+    <g id="info_panel_image_slot">
+      <rect x="120" y="48" width="132" height="164" stroke="#667278" stroke-width="2"/>
+      <path d="M152 164L184 126L214 158L234 138" stroke="#9AA8AE" stroke-width="2"/>
+      <rect x="164" y="76" width="42" height="42" stroke="#9AA8AE" stroke-width="2"/>
+    </g>
+    <g id="info_panel_title" fill="#EDF2F3">
+      <text x="284" y="72" font-size="24">TITLE</text>
+    </g>
+    <g id="info_panel_fields" fill="#AEBBC0" font-size="18">
+      <text x="284" y="112">FIELD 01</text>
+      <text x="284" y="142">FIELD 02</text>
+      <text x="284" y="172">FIELD 03</text>
+      <text x="284" y="202">FIELD 04</text>
+    </g>
+  </g>
+</svg>

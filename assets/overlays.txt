@@ -1,0 +1,168 @@
+HOMEGUARD OVERLAY ASSETS
+Stand: 2026-11-03
+
+ZWECK
+HomeGuard soll spaeter mehrere lokale Kamera-Feeds von Kameras, Laptops und iPads darstellen. Die Overlays liegen ueber den Kamera-Feeds und werden vom spaeteren Python-Programm dynamisch positioniert, skaliert, gefaerbt, animiert und bei Bedarf mit einem Informationsfeld verbunden.
+
+Dieses Paket definiert ausschliesslich die visuellen Grundbausteine. Es enthaelt keine Erkennungs-, Sicherheits-, Identitaets- oder Zuordnungslogik.
+
+MINIMALES ASSET-MODELL
+1. frame_base.svg
+   Ein universeller, eckiger und textfreier Zielrahmen.
+   Das Python-Programm setzt Position, Breite, Hoehe, Farbe, Deckkraft und Animation dynamisch.
+
+2. info_panel.svg
+   Ein universelles, farbneutrales Informationsfeld mit neutraler Verbindungslinie.
+   Es kann an jeden Zielrahmen angehaengt werden.
+   Es enthaelt Platzhalter fuer ein optionales Referenzbild, einen Titel und mehrere Datenzeilen.
+
+ALLGEMEINE DARSTELLUNGSREGELN
+- Es gibt keine runden oder pillenfoermigen Overlay-Elemente.
+- Der Zielrahmen enthaelt keinerlei Text, Namen oder Identifier.
+- Text erscheint ausschliesslich im angehaengten Informationsfeld.
+- Das Informationsfeld bleibt immer farbneutral, unabhaengig von der Farbe des Zielrahmens.
+- Rahmen und Informationsfeld sind eigenstaendige Assets.
+- Das Informationsfeld darf nur bei Bedarf eingeblendet werden.
+- Das Informationsfeld kann optional ein Referenzbild aus einer Datenbank anzeigen.
+- Die Verbindungslinie zwischen Rahmen und Informationsfeld ist neutral und gehoert zum Informationsfeld.
+- Derselbe Rahmen wird fuer alle Zieltypen verwendet und nur dynamisch skaliert.
+- Animationen werden spaeter durch das Python-Programm oder CSS erzeugt, nicht durch fachliche Logik im SVG.
+- Beim Scannen wird ausschliesslich ein blaues Scan-Overlay ueber dem Ziel angezeigt.
+- Das Scan-Overlay enthaelt keinen Text und kein angehaengtes Informationsfeld.
+- Der Lade- beziehungsweise Fortschrittsbalken liegt direkt innerhalb des blauen Scan-Overlays.
+- Erst nach Abschluss des Scans darf bei vorhandenen Daten ein separates Informationsfeld angehaengt werden.
+
+FARBREGELN FUER DEN ZIELRAHMEN
+- Gelb: einem Admin zugeordnet.
+- Gruen: Trusted oder als sicher zugeordnet.
+- Weiss: Unknown oder neutral.
+- Rot: Threat oder als gefaehrlich zugeordnet.
+- Blau: Ein Scan oder Analysevorgang laeuft gerade, zum Beispiel Identifizierung, Objektklassifizierung, Handpruefung oder Kennzeichen-OCR.
+
+Die Farbe zeigt nur den vom spaeteren Programm gesetzten Darstellungszustand. Die Assets entscheiden nicht, wann ein Zustand gilt.
+
+ZIELTYPEN
+Die folgenden Typen sind fuer das spaetere Programm getrennte Ziele. Sie verwenden trotzdem dasselbe frame_base.svg:
+- Faces
+- Hands
+- Objects
+- Vehicles
+- License Plates
+
+FACES
+- Gesichter koennen Gelb, Gruen, Weiss oder Rot dargestellt werden.
+- Waehrend einer Identifizierung wird das blaue, textfreie Scan-Overlay mit internem Fortschrittsbalken verwendet.
+- Eine bereits gesehene, aber weiterhin unbekannte Person bleibt Weiss.
+- Hinweise wie Name, Status, letzte Sichtung oder Referenzbild stehen nur im Informationsfeld.
+
+HANDS
+- Haende werden nicht als eigenstaendige Objekte dauerhaft getrackt oder klassifiziert.
+- Ein Handrahmen weist nur darauf hin, welcher Bereich gerade geprueft wird.
+- Die neutrale Handmarkierung ist Weiss.
+- Waehrend einer laufenden Pruefung wird das blaue, textfreie Scan-Overlay mit internem Fortschrittsbalken verwendet.
+- Ob eine Hand einen Gegenstand haelt, entscheidet ausschliesslich das spaetere Programm.
+
+OBJECTS
+- Gegenstaende sind eigenstaendige Ziele.
+- Gegenstaende koennen verfolgt und klassifiziert werden.
+- Gegenstaende koennen Weiss, Gruen oder Rot dargestellt werden. Waehrend der Klassifizierung wird das blaue, textfreie Scan-Overlay mit internem Fortschrittsbalken verwendet.
+- Bekannte Daten, Besitzer, Historie oder ein Referenzbild stehen im Informationsfeld.
+
+VEHICLES
+- Fahrzeuge sind eigenstaendige Ziele.
+- Der normale Fahrzeugrahmen ist Weiss.
+- Waehrend eines Scan- oder Analysevorgangs wird das blaue, textfreie Scan-Overlay mit internem Fortschrittsbalken verwendet.
+- Informationen wie Besitzer, Fahrerhistorie, wer das Fahrzeug hergefahren hat oder letzte Sichtung stehen im Informationsfeld.
+- Insassen, Gegenstaende und Kennzeichen sind keine Bestandteile des Fahrzeug-Assets.
+
+LICENSE PLATES
+- Nummernschilder sind eigenstaendige Ziele.
+- Ein erkanntes oder fertig gelesenes Nummernschild ist Weiss.
+- Waehrend OCR oder Lesen wird das blaue, textfreie Scan-Overlay mit internem Fortschrittsbalken verwendet.
+- Der erkannte Kennzeichentext und weitere Daten stehen im Informationsfeld.
+- Die Zuordnung eines Kennzeichens zu einem Fahrzeug erfolgt spaeter im Programm.
+
+SCAN-OVERLAY
+- scan_overlay.svg wird fuer laufende Scan- und Analysevorgaenge verwendet.
+- Es ist immer Blau.
+- Es enthaelt keinerlei Text, Namen, Identifier, Statuszeilen oder Referenzbilder.
+- Der Fortschrittsbalken ist Bestandteil des Scan-Overlays und liegt innerhalb des Zielrahmens.
+- Das Scan-Overlay kann dynamisch positioniert und skaliert werden.
+- Die Scanlinie und der Fortschrittswert werden vom Python-Programm oder CSS animiert.
+- Waehrend des Scans wird kein info_panel.svg angezeigt.
+- Nach Abschluss des Scans wird das Scan-Overlay entfernt. Erst danach kann bei Bedarf info_panel.svg angehaengt werden.
+
+INFORMATIONSFELD
+Das neutrale info_panel.svg kann enthalten:
+- Titel
+- freie Datenzeilen
+- Status oder Prozessinformation
+- letzte Sichtung
+- Besitzer oder zugeordnete Person
+- Fahrerhistorie
+- ausgelesenes Kennzeichen
+- optionales Referenzbild aus der Datenbank
+
+Die Inhalte werden dynamisch vom Python-Programm eingesetzt. Das SVG enthaelt nur benannte Platzhaltergruppen und Beispieltext.
+
+EMPFOHLENE DYNAMISCHE PARAMETER
+Rahmen:
+- target_id
+- target_type
+- x
+- y
+- width
+- height
+- color
+- opacity
+- processing
+- pulse
+
+Informationsfeld:
+- visible
+- anchor_side
+- offset_x
+- offset_y
+- connector_length
+- title
+- fields
+- image_url oder image_data
+
+EMPFOHLENE IDENTIFIER
+- frame_base
+- scan_overlay
+- scan_overlay_frame
+- scan_overlay_line
+- scan_overlay_progress_track
+- scan_overlay_progress_value
+- info_panel
+- info_panel_image_slot
+- info_panel_title
+- info_panel_fields
+- info_panel_connector
+
+TRENNUNG VON DARSTELLUNG UND LOGIK
+Die Assets legen nicht fest:
+- wie eine Person Admin, Trusted, Unknown oder Threat wird
+- ob eine Hand einen Gegenstand haelt
+- ob ein Gegenstand gefaehrlich ist
+- welches Kennzeichen zu welchem Fahrzeug gehoert
+- welche Person in einem Fahrzeug sitzt oder es gefahren hat
+- wann Daten gespeichert, geladen oder angezeigt werden
+
+Diese Entscheidungen trifft ausschliesslich das spaetere HomeGuard-Python-Programm.
+
+VORGESEHENE REPOSITORY-STRUKTUR
+assets/
+  overlays.txt
+  overlays/
+    frame_base.svg
+    scan_overlay.svg
+    info_panel.svg
+
+Die spaetere JSON-Datei kann auf diese Dateien per relativem Pfad oder GitHub-Raw-URL verweisen.
+
+KLARSTELLUNG ZUM INFORMATIONSFELD
+- info_panel.svg enthaelt keinen Lade- oder Fortschrittsbalken.
+- Fortschritt wird ausschliesslich im blauen scan_overlay.svg dargestellt.
+- info_panel.svg wird erst nach Abschluss eines Scans eingeblendet, sofern Informationen vorhanden sind.

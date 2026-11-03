@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <g id="scan_overlay" stroke="#39AFEA" vector-effect="non-scaling-stroke">
+    <rect id="scan_overlay_frame" x="42" y="36" width="316" height="228" stroke-width="3"/>
+    <path id="scan_corner_top_left" d="M30 78V24H84" stroke-width="6"/>
+    <path id="scan_corner_top_right" d="M316 24H370V78" stroke-width="6"/>
+    <path id="scan_corner_bottom_left" d="M30 222V276H84" stroke-width="6"/>
+    <path id="scan_corner_bottom_right" d="M316 276H370V222" stroke-width="6"/>
+    <path id="scan_overlay_line" d="M42 116H358" stroke-width="2"/>
+    <rect id="scan_overlay_progress_track" x="62" y="238" width="276" height="8" fill="#173448" stroke="none"/>
+    <rect id="scan_overlay_progress_value" x="62" y="238" width="166" height="8" fill="#39AFEA" stroke="none"/>
+  </g>
+</svg>

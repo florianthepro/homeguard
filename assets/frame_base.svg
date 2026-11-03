@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <g id="frame_base" stroke="#EDF2F3" stroke-width="3" vector-effect="non-scaling-stroke">
+    <rect id="frame_outline" x="42" y="36" width="316" height="228"/>
+    <path id="corner_top_left" d="M30 78V24H84" stroke-width="6"/>
+    <path id="corner_top_right" d="M316 24H370V78" stroke-width="6"/>
+    <path id="corner_bottom_left" d="M30 222V276H84" stroke-width="6"/>
+    <path id="corner_bottom_right" d="M316 276H370V222" stroke-width="6"/>
+    <path id="center_tick_top" d="M200 24V38"/>
+    <path id="center_tick_right" d="M358 150H372"/>
+    <path id="center_tick_bottom" d="M200 262V276"/>
+    <path id="center_tick_left" d="M28 150H42"/>
+  </g>
+</svg>
