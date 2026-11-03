@@ -1,0 +1,831 @@
+TECHNISCHE PROGRAMMANFORDERUNGEN
+
+Produktname: home guard
+Dokumenttyp: Technische Funktions-, Bedien- und Designanforderungen
+
+
+1. GRUNDANFORDERUNGEN
+
+- Die Anwendung muss als lokales Desktopprogramm ausgeführt werden.
+- Die Anwendung darf keinen Webserver und keine Browseroberfläche benötigen.
+- Die primäre Zielplattform ist Windows 11.
+- Die Anwendung muss mit Python 3.11 oder neuer funktionieren.
+- Die Oberfläche muss in einem einzigen Hauptfenster ausgeführt werden.
+- Alle Funktionen müssen ohne sichtbare interne IDs, Debugwerte oder technische Datenbankinformationen bedienbar sein. infos die relvant sind schon
+- Die Bedienung muss für Benutzer ohne technische Vorkenntnisse verständlich sein.
+- Häufig verwendete Aktionen müssen mit maximal ein bis zwei Klicks erreichbar sein.
+- Fehler müssen verständlich in der Oberfläche angezeigt werden.
+- Unbehandelte Fehlermeldungen dürfen nicht nur im Terminal erscheinen.
+- Alle Daten müssen lokal gespeichert werden.
+- Die Anwendung muss auch ohne Internetverbindung vollständig funktionieren.
+
+
+2. TECHNISCHE ARCHITEKTUR
+
+Die Anwendung muss modular aufgebaut sein. Mindestens folgende Komponenten müssen getrennt implementiert werden:
+
+- Hauptfenster und Navigation
+- Kamera- und Quellenverwaltung
+- Livebild-Pipeline
+- Aufnahme und Segmentverwaltung
+- Wiedergabe
+- Objekt- und Bewegungstracking
+- Kontextverwaltung
+- Overlay-Darstellung
+- Aktenverwaltung
+- Suche
+- Momentaufnahmen
+- Datenbank
+- Einstellungen
+- Fehlerprotokollierung
+
+Die grafische Oberfläche, Kameraabfrage, Bildanalyse, Aufnahme und Datenbankzugriffe dürfen nicht in einer einzigen großen Programmdatei zusammengefasst werden.
+
+
+3. THREAD- UND VERARBEITUNGSMODELL
+
+- Die grafische Oberfläche muss ausschließlich im GUI-Thread aktualisiert werden.
+- Jede aktive Kamera muss in einem eigenen Worker laufen.
+- Bildanalyse und Tracking müssen außerhalb des GUI-Threads ausgeführt werden.
+- Videoaufnahmen müssen außerhalb des GUI-Threads geschrieben werden.
+- Datenbank-Schreiboperationen dürfen das Livebild nicht blockieren.
+- Pro Kamera darf höchstens ein aufwendiger Analysejob gleichzeitig aktiv sein.
+- Frame-Warteschlangen müssen begrenzt sein.
+- Für das Livebild muss immer das neueste verfügbare Bild verwendet werden.
+- Alte Livebilder dürfen nicht verspätet als Warteschlange abgespielt werden.
+
+
+4. KAMERAQUELLEN
+
+Unterstützte Quellen:
+
+- lokale Kamera über Index 0, 1, 2 und weitere
+- RTSP-Quelle
+- HTTP- oder MJPEG-Quelle
+- lokale Videodatei
+- virtuelle Kamera
+
+Für jede Kamera müssen folgende Einstellungen verfügbar sein:
+
+- Anzeigename
+- Quelle
+- aktiviert oder deaktiviert
+- Live oder Aufnahme
+- bevorzugte Auflösung
+- gewünschte Bildrate
+- Drehung
+- horizontale Spiegelung
+- Verbindungszeitlimit
+- Wiederverbindungsintervall
+- optionaler Gruppen- oder Szenenname
+
+Interne Kamera-IDs dürfen nicht in der normalen Oberfläche erscheinen.
+
+
+5. KAMERAZUSTÄNDE
+
+Jede Kamera muss einen klaren technischen Zustand besitzen:
+
+- DISABLED
+- STARTING
+- CONNECTING
+- LIVE
+- RECORDING
+- RECONNECTING
+- NO_SIGNAL
+- ERROR
+- STOPPING
+
+Benutzerfreundliche Darstellung:
+
+- Kamera wird gestartet …
+- Verbindung wird aufgebaut …
+- LIVE
+- REC
+- Verbindung wird wiederhergestellt …
+- Kein Bildsignal
+- Kamera deaktiviert
+- Fehler beim Öffnen der Kamera
+
+Während STARTING oder CONNECTING muss ein dezenter animierter Ladezustand sichtbar sein. Ein schwarzes Bild ohne Statusinformation ist nicht zulässig.
+
+
+6. LIVEBILD
+
+- Das Livebild muss möglichst verzögerungsarm dargestellt werden.
+- Zielwert der GUI-Darstellung: 24 bis 30 Bilder pro Sekunde.
+- Zielwert für schnelles Tracking: 8 bis 15 Analysen pro Sekunde.
+- Aufwendige Zusatzanalyse: 1 bis 3 Analysen pro Sekunde.
+- Die lokale Liveverzögerung soll möglichst unter 250 Millisekunden bleiben.
+- Die Gesichtsanalyse darf nicht direkt im Renderzyklus ausgeführt werden.
+- Kamera-Widgets dürfen nicht für jedes Bild zerstört und neu erstellt werden.
+- Größenänderungen des Fensters dürfen das Livebild nicht stoppen.
+- Das Seitenverhältnis der Kamera muss erhalten bleiben.
+- Nicht genutzte Bildfläche muss neutral schwarz oder sehr dunkel dargestellt werden.
+
+
+7. AUFNAHME
+
+- Neue Kameras müssen standardmäßig im Modus LIVE ohne Aufnahme starten.
+- Die Aufnahme muss pro Kamera manuell aktiviert und deaktiviert werden können.
+- Der Status LIVE oder REC muss eindeutig sichtbar sein.
+- REC muss klein, rot und nicht störend dargestellt werden.
+- Aufnahmen müssen in zeitlich begrenzte Segmente aufgeteilt werden.
+- Empfohlene Segmentdauer: 5 bis 15 Minuten.
+- Aufnahme-Dateien müssen beim Stoppen und beim Beenden der Anwendung korrekt geschlossen werden.
+- Ein Verbindungsabbruch darf keine dauerhaft geöffnete oder beschädigte Datei hinterlassen.
+- Zu jedem Segment müssen Metadaten gespeichert werden.
+
+Metadaten pro Segment:
+
+- Kamera
+- Startzeit
+- Endzeit
+- Auflösung
+- Bildrate
+- Dateipfad
+- optionale Bezeichnung
+- Zeitmarkierungen
+- Notizen
+- verknüpfte Akten
+
+
+8. AUFNAHMEWIEDERGABE
+
+Livebild und Aufnahmewiedergabe müssen dieselbe zentrale Bildfläche verwenden.
+
+Erforderliche Bedienelemente:
+
+- Play und Pause
+- fünf Sekunden zurück
+- fünf Sekunden vor
+- Zeitleiste
+- aktuelle Wiedergabezeit
+- Gesamtdauer
+- Kameraauswahl
+- Datumsfilter
+- Aufnahmeliste
+- zurück zu Live
+- Overlay ein- und ausblenden
+- Momentaufnahme erstellen
+- Zeitmarke setzen
+- Notiz hinzufügen
+
+Ein externer Videoplayer darf nicht erforderlich sein.
+
+
+9. KONTEXTBEZOGENES TRACKING
+
+Ein erkanntes Objekt muss zunächst als temporärer Track behandelt werden.
+
+Ein Track muss mindestens enthalten:
+
+- interne temporäre Track-ID
+- aktuelle Bounding Box
+- prognostizierte Bounding Box
+- Bewegungsrichtung
+- Geschwindigkeit
+- Größenänderung
+- Anzahl bestätigter Frames
+- Anzahl fehlender Frames
+- Zeitpunkt der letzten Aktualisierung
+- Kamera
+- optional verbundene Akte
+- Qualitätsstatus
+
+Interne Track-IDs dürfen nicht angezeigt werden.
+
+Das Tracking muss möglichst stabil bleiben bei:
+
+- Bewegung im Bild
+- Annäherung und Entfernung
+- Kopfbewegung
+- vollständig weggedrehtem Kopf
+- Rückenansicht
+- Bücken
+- Sitzen
+- ungewöhnlicher Haltung
+- kurzem Verlassen des Erkennungsbereichs
+- Verdeckung
+- Bewegungsunschärfe
+- Lichtwechsel
+- Schatten
+- kurzfristig fehlendem Gesicht
+- teilweise verdecktem Körper
+
+Das Tracking muss mehrere Signale kombinieren können:
+
+- Position
+- Mittelpunktdistanz
+- Überlappung der Rahmen
+- Geschwindigkeit
+- Bewegungsrichtung
+- Größenänderung
+- Körperrahmen
+- Silhouette
+- kurzfristige Farbmerkmale
+- Gesicht, falls sichtbar
+- optionaler Produktionsmarker
+- manuelle Zuordnung
+
+Das Gesicht darf nicht das einzige Trackingsignal sein.
+
+Empfohlene Trackingverfahren:
+
+- Kalman-Filter
+- IoU-Matching
+- Mittelpunktdistanz
+- Größen- und Seitenverhältnisvergleich
+- begrenzte Erscheinungsmerkmale
+- zeitliche Glättung
+
+
+10. KURZZEITIGE UNSICHTBARKEIT UND VERDECKUNG
+
+- Ein Track darf bei einem fehlenden Gesicht nicht sofort beendet werden.
+- Die Position muss kurzfristig anhand der letzten Bewegung prognostiziert werden.
+- Der prognostizierte Rahmen muss dünner oder transparenter erscheinen.
+- Eine kurze Erkennungslücke darf keine neue Akte erzeugen.
+- Bei Wiederauftauchen muss der bestehende Track bevorzugt werden.
+- Der Timeout muss konfigurierbar sein.
+
+Empfohlene Standardwerte:
+
+- kurze Erkennungslücke: bis 2 Sekunden
+- vollständiger Track-Timeout: 4 bis 8 Sekunden
+
+Nach Ablauf des Timeouts muss der Track sauber beendet werden.
+
+
+11. UNKNOWN-LOGIK
+
+- Ein neuer Track darf nach einem einzelnen Frame keine dauerhafte Akte erzeugen.
+- Eine Unknown-Akte darf erst nach mehreren stabilen Bestätigungen erstellt werden.
+- Eine Unknown-Akte muss namenlos bleiben.
+- Für eine namenlose Akte darf keine sichtbare künstliche Nummer erzeugt werden.
+- Unterschiedliche brauchbare Ansichten desselben laufenden Tracks dürfen dieselbe Akte ergänzen.
+- Nahezu identische Bilder dürfen nicht unbegrenzt gespeichert werden.
+- Die Anzahl automatisch gespeicherter Profilbilder muss begrenzt sein.
+
+Unknown ohne gespeicherte Informationen:
+
+- nur filmischer Eckrahmen
+- kein Text
+- kein Name
+- kein Wort Unknown
+- keine Nummer
+- kein Score
+
+Unknown mit mindestens einer gespeicherten Information:
+
+- kompakte Beschriftung möglich
+- bevorzugt Flag oder Status
+- keine technische ID
+
+
+12. EINHEITLICHE AKTEN
+
+Es darf nur eine einheitliche Aktenart geben.
+
+Eine Akte kann folgende Typen repräsentieren:
+
+- Person
+- Fahrzeug
+- Requisite
+- Objekt
+- sonstiger Eintrag
+
+Mögliche Aktenfelder:
+
+- Anzeigename
+- Typ
+- Status
+- freie Flags
+- Beschreibung
+- allgemeine Notizen
+- zeitbezogene Notizen
+- Rolle oder Bezeichnung
+- Kleidung oder visuelle Beschreibung
+- Requisiten
+- Gruppen oder Szenen
+- Kennzeichenfeld
+- Fahrzeugtyp
+- Fahrzeugfarbe
+- Produktionsmarker
+- Momentaufnahmen
+- verknüpfte Sichtungen
+- Beziehungen zu anderen Akten
+- Erstellungszeit
+- Änderungszeit
+- letzte Sichtung
+
+Interne Datenbank-IDs dürfen niemals in der normalen Oberfläche angezeigt werden.
+
+
+13. STATUS UND FLAGS
+
+Standardstatus:
+
+- unknown
+- trusted
+- admin
+- threat
+
+Admin ist nur ein normaler auswählbarer Status innerhalb einer Akte.
+
+Nicht zulässig:
+
+- eigener Admin-Datentyp
+- eigener Admin-Anlegeprozess
+- eigene Admin-Datenbank
+- zusätzlicher Admin-Hauptbutton
+
+Freie Flags müssen unterstützt werden.
+
+Beispiele:
+
+- MAIN CAST
+- VISITOR
+- CREW
+- VEHICLE
+- FOLLOW
+- PROP
+- SCENE 12
+
+Flags müssen frei erstellt, entfernt, gesucht und angezeigt werden können.
+
+
+14. AKTENZUORDNUNG AUS LIVEBILD ODER AUFNAHME
+
+Ein Klick auf einen sichtbaren Rahmen muss ein kleines Kontextmenü in der Nähe des Rahmens öffnen.
+
+Erforderliche Aktionen:
+
+- Akte öffnen
+- Daten hinzufügen
+- Mit Akte verbinden
+- Neue Akte erstellen
+- Momentaufnahme erstellen
+- Notiz hinzufügen
+- Flag setzen
+
+Das Kontextmenü darf den Hauptinhalt nicht großflächig verdecken.
+
+Die Suche zum Verbinden mit einer Akte muss mindestens berücksichtigen:
+
+- Name
+- Notiz
+- Flag
+- Status
+- Typ
+- Rollenbezeichnung
+- Kleidung
+- Requisite
+- Kennzeichenfeld
+- Produktionsmarker
+
+Eine dauerhafte Verknüpfung muss manuell bestätigt werden.
+
+
+15. MOMENTAUFNAHMEN
+
+Momentaufnahmen müssen erstellt werden können aus:
+
+- Livebild
+- laufender Aufnahme
+- pausierter Aufnahme
+- ausgewähltem Rahmen
+- frei gewähltem Bildausschnitt
+
+Vor dem Speichern muss eine Vorschau erscheinen.
+
+Zu jeder Momentaufnahme müssen gespeichert werden:
+
+- Aktenzuordnung
+- Kamera
+- Zeitpunkt
+- Aufnahmedatei
+- Position innerhalb der Aufnahme
+- optionaler Gruppen- oder Szenenname
+- Notiz
+- Flags
+- Ausschnittskoordinaten
+- Bilddatei
+- Erstellungszeit
+
+
+16. FAHRZEUGTRACKING
+
+Fahrzeuge müssen als generische Objekte temporär verfolgt werden können.
+
+Trackmerkmale:
+
+- Position
+- Größe
+- Bewegungsrichtung
+- Geschwindigkeit
+- Größenänderung
+- Farbe
+- optionaler Produktionsmarker
+
+Fahrzeugakten müssen folgende Felder unterstützen:
+
+- Anzeigename
+- Kennzeichenfeld
+- Fahrzeugtyp
+- Farbe
+- Status
+- Flags
+- Notizen
+- verknüpfte Akten
+- Marker
+- Momentaufnahmen
+- Sichtungen
+
+Das Kennzeichenfeld muss manuell editierbar und durchsuchbar sein.
+
+
+17. HANDTRACKING UND GESTEN
+
+Das Handtracking muss optional aktiviert werden können.
+
+Funktionen:
+
+- mehrere Hände erkennen
+- Handregionen verfolgen
+- vereinfachte Handpunkte oder Skelettdarstellung
+- Bewegungsspur optional anzeigen
+- Handtracking pro Kamera aktivieren oder deaktivieren
+- definierte Gesten als Ereignis speichern
+- Gestenanzeige im Overlay aktivieren oder deaktivieren
+
+Mögliche konfigurierbare Gesten:
+
+- offene Hand
+- Faust
+- Zeigegeste
+- beide Hände sichtbar
+- Hand innerhalb einer definierten Zone
+
+Die Gestenerkennung muss vollständig optional sein.
+
+
+18. PRODUKTIONSMARKER
+
+Optionale Marker müssen unterstützt werden.
+
+Empfohlener Standard:
+
+- ArUco-Marker
+
+Marker müssen mit einer Akte verbunden werden können.
+
+Markerfelder:
+
+- interne Markerkennung
+- Aktenzuordnung
+- Anzeigename
+- Objekttyp
+- Gruppen- oder Szenenzuordnung
+- aktiviert oder deaktiviert
+
+Die technische Markerkennung darf im Overlay nicht angezeigt werden.
+
+
+19. BENUTZEROBERFLÄCHE
+
+Die Anwendung muss ein einziges Hauptfenster besitzen.
+
+Obere Hauptnavigation:
+
+- LIVE
+- AUFNAHMEN
+- SUCHE
+- AKTEN
+- KAMERAS
+
+Die Navigation muss für jeden Benutzer ohne Anleitung verständlich sein.
+
+Bedienregeln:
+
+- klare deutsche Beschriftungen
+- keine technischen Abkürzungen ohne Erklärung
+- häufige Aktionen direkt erreichbar
+- seltene Aktionen im Kontextmenü
+- konsistente Positionen für Speichern, Abbrechen und Schließen
+- sichtbare Rückmeldung nach jeder Aktion
+- keine versteckten Pflichtschritte
+- keine unklaren Symbole ohne Tooltip
+- Tastatur und Maus müssen unterstützt werden
+
+
+20. AUSFAHRBARES OBERMENÜ
+
+Beim Klick auf einen Hauptpunkt muss ein Untermenü von oben eingeblendet werden.
+
+Das Untermenü muss:
+
+- über der Videofläche liegen
+- das Video nicht verkleinern
+- das Kameraraster nicht neu aufbauen
+- flüssig ein- und ausfahren
+- über ein sichtbares × geschlossen werden können
+- mit Escape geschlossen werden können
+- durch Klick auf die freie Videofläche geschlossen werden können
+- beim erneuten Klick auf denselben Menüpunkt geschlossen werden
+- beim Wechsel zu einem anderen Hauptpunkt seinen Inhalt wechseln
+
+Eine permanent geöffnete Seitenleiste ist nicht zulässig.
+
+
+21. FILMISCHES OVERLAY
+
+Das Overlay muss reduziert, präzise und ruhig wirken.
+
+Kameraanzeige:
+
+Oben links:
+
+- Kameraname
+- LIVE oder REC
+
+Oben rechts:
+
+- Uhrzeit
+- optional Datum
+
+REC-Darstellung:
+
+- klein
+- rot
+- eindeutig
+- nicht blinkend oder nur sehr dezent animiert
+
+Trackrahmen:
+
+- keine große dominante Vollbox
+- feine Linien
+- verstärkte Ecken
+- Antialiasing
+- Statusfarbe
+- bei prognostiziertem Kontext dünner oder transparenter
+- keine permanente Textfläche
+
+Statusfarben:
+
+- Unknown: Weiß
+- Trusted: Grün
+- Admin: Gelb oder Amber
+- Threat: Rot
+
+Text darf nur erscheinen, wenn mindestens eine sinnvolle Information vorhanden ist.
+
+Textpriorität:
+
+1. Anzeigename
+2. Rollenname oder Bezeichnung
+3. Flag
+4. Status
+
+Nicht im Overlay anzeigen:
+
+- interne IDs
+- Tracknummern
+- Marker-IDs
+- Ähnlichkeitswerte
+- Debugwerte
+- Datenbankwerte
+- technische Fehlerdetails
+
+
+22. SUCHE
+
+Die globale Suche muss mindestens folgende Inhalte durchsuchen:
+
+- Anzeigename
+- Typ
+- Status
+- Flags
+- Notizen
+- Rollenname
+- Fahrzeugname
+- Kennzeichenfeld
+- Kleidung
+- Requisite
+- Gruppe oder Szene
+- Kamera
+- Zeitpunkt
+- Produktionsmarker
+
+Suchergebnisse müssen als übersichtliche Karten oder Listeneinträge erscheinen.
+
+Jedes Ergebnis soll enthalten:
+
+- Anzeigename oder neutrale Bezeichnung
+- Typ
+- Status
+- Vorschaubild, falls vorhanden
+- letzte Sichtung
+- Kamera
+- Zeitpunkt
+
+
+23. DATENBANK
+
+Die lokale Datenbank muss SQLite verwenden.
+
+SQLite muss im WAL-Modus betrieben werden.
+
+Mindestens erforderliche Tabellen:
+
+- cameras
+- recordings
+- recording_segments
+- dossiers
+- dossier_fields
+- flags
+- notes
+- relationships
+- snapshots
+- sightings
+- tracks
+- track_samples
+- markers
+- vehicles
+- props
+- scenes
+- events
+- settings
+
+Alle Tabellen müssen besitzen:
+
+- Primärschlüssel
+- Erstellungszeit
+- Änderungszeit
+- geeignete Indizes
+- Fremdschlüssel
+- konsistente Löschregeln
+
+
+24. FEHLERBEHANDLUNG
+
+Alle benutzerrelevanten Fehler müssen in der GUI erscheinen.
+
+Beispiele:
+
+- Kamera konnte nicht geöffnet werden.
+- Verbindung wird erneut versucht.
+- Aufnahme konnte nicht gestartet werden.
+- Datei konnte nicht gelesen werden.
+- Momentaufnahme konnte nicht gespeichert werden.
+- Es wurde kein gültiges Objekt ausgewählt.
+- Es muss genau ein Objekt sichtbar sein.
+
+Zusätzlich muss eine lokale Logdatei geschrieben werden:
+
+- data/logs/homeguard.log
+
+Die Logdatei darf technische Details enthalten. Die GUI muss dagegen kurze und verständliche Meldungen anzeigen.
+
+
+25. EINSTELLUNGEN
+
+Konfigurierbare Einstellungen:
+
+- Sprache
+- Farbschema
+- Standardkamera
+- gewünschte Bildrate
+- Trackingintervall
+- Track-Timeout
+- Aufnahmeordner
+- Segmentdauer
+- Momentaufnahmeordner
+- Overlay ein oder aus
+- Statusfarben
+- Handtracking ein oder aus
+- Markertracking ein oder aus
+- maximale Anzahl automatischer Profilbilder
+- Wiederverbindungsintervall
+- Log-Level
+
+Alle Einstellungen müssen über die GUI erreichbar sein.
+
+
+26. PERFORMANCE
+
+- Die GUI muss während der Analyse bedienbar bleiben.
+- Datenbankzugriffe dürfen das Livebild nicht blockieren.
+- Tracking und Anzeige müssen unabhängig laufen.
+- Pro Kamera darf höchstens ein Analysejob gleichzeitig laufen.
+- Frame-Puffer müssen feste Maximalgrößen besitzen.
+- Overlays müssen zwischengespeichert werden.
+- Vorschaubilder müssen skaliert und zwischengespeichert werden.
+- Listen dürfen nicht bei jedem Frame neu aufgebaut werden.
+- Kameras dürfen bei einfachen Oberflächenaktionen nicht neu gestartet werden.
+- Regelmäßige Timer dürfen nicht durch wiederholte Benutzeraktionen vervielfacht werden.
+
+
+27. EINFACHE BEDIENUNG
+
+Die Software muss ohne technische Vorkenntnisse bedienbar sein.
+
+Verbindliche Usability-Anforderungen:
+
+- Eine neue Kamera muss in einem klaren Formular angelegt werden können.
+- Beispiele für gültige Quellen müssen direkt im Formular stehen.
+- Nach dem Speichern muss sofort ein verständlicher Status erscheinen.
+- Aufnahme muss eindeutig ein- und ausgeschaltet werden können.
+- Eine Akte muss aus dem sichtbaren Rahmen heraus geöffnet werden können.
+- Name, Notiz oder Flag müssen ohne weitere Pflichtfelder gespeichert werden können.
+- Unknown-Einträge dürfen keine sichtbaren technischen Bezeichnungen bekommen.
+- Speichern muss immer am gleichen Ort erscheinen.
+- Schließen muss immer über × und Escape möglich sein.
+- Alle Symbole benötigen Tooltips.
+- Gefährliche Aktionen wie Löschen müssen bestätigt werden.
+- Wiederherstellbare Aktionen sollen angeboten werden.
+- Leere Ansichten müssen erklären, was als Nächstes zu tun ist.
+- Lade- und Verbindungszustände müssen sichtbar sein.
+- Keine Funktion darf ausschließlich über Rechtsklick erreichbar sein.
+- Rechtsklick darf zusätzliche Schnellaktionen anbieten.
+
+
+28. TESTANFORDERUNGEN
+
+Automatisierte Tests:
+
+- Datenbankerstellung
+- Datenbankmigration
+- Kamera hinzufügen
+- Kamera deaktivieren
+- Kamera wieder aktivieren
+- Aufnahme starten
+- Aufnahme stoppen
+- Segmentdatei schließen
+- Trackkontinuität
+- Track-Timeout
+- kurzzeitige Verdeckung
+- Bewegungsprognose
+- Lichtwechsel-Simulation
+- Momentaufnahme speichern
+- Akte anlegen
+- Status ändern
+- Flags speichern
+- Akten verbinden
+- Marker verbinden
+- Suche
+- Aufnahmewiedergabe
+- Windows-GUI-Starttest
+
+Manuelle Tests:
+
+- Kopf vollständig wegdrehen
+- kurz den Bildbereich verlassen
+- bücken und wieder aufrichten
+- zwei Tracks kreuzen sich
+- starke Lichtänderung
+- kurzfristige Kameraunterbrechung
+- Fahrzeug bewegt sich durch das Bild
+- Marker wird kurz verdeckt
+- Aufnahme während Livebetrieb starten
+- Momentaufnahme aus Livebild erstellen
+- Momentaufnahme aus Aufnahme erstellen
+- Obermenü mehrfach öffnen und schließen
+- Fenstergröße mehrfach ändern
+
+
+29. ABNAHMEKRITERIEN
+
+Die Software gilt als abnahmefähig, wenn:
+
+- die Anwendung unter Windows ohne Traceback startet
+- mindestens zwei Kameras parallel funktionieren
+- das Livebild nicht durch Analyse blockiert wird
+- Aufnahme zuverlässig startet und stoppt
+- eine kurzzeitig nicht erkennbare Person im laufenden Kontext erhalten bleibt
+- kurze Verdeckungen keinen sofortigen neuen Track erzeugen
+- Unknown ohne Informationen keinen Text anzeigt
+- gespeicherte Informationen kompakt dargestellt werden
+- Momentaufnahmen dauerhaft gespeichert werden
+- Admin nur als normaler Status existiert
+- keine permanente Seitenleiste vorhanden ist
+- alle Hauptmenüs als schließbare Overlays funktionieren
+- Live und Aufnahmen dieselbe zentrale Bildfläche verwenden
+- interne IDs niemals sichtbar sind
+- alle benutzerrelevanten Fehler verständlich in der GUI erscheinen
+- alle automatisierten Tests erfolgreich durchlaufen
+
+
+30. PRODUKT- UND BUILDNAME
+
+Produktname:
+
+home guard
+
+Technischer Buildname:
+
+homeguard_V6
+
+ZIP-Dateiname:
+
+homeguard_V6.zip
